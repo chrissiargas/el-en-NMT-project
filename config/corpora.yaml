@@ -1,0 +1,86 @@
+# OPUS el-en corpora (plan section 2). Pair counts are from the OPUS API on 2026-10-08.
+#
+# Order matters: exact dedup keeps the first copy, by tier (A, A-, B, B') and then by the order below,
+# so the human-translated corpora come first within Tier A.
+#
+# Fields: version, tier, domain; optional enabled (default True), min_bicleaner (keep only pairs
+# scoring at least this), cap (maximum pairs kept after scoring).
+#
+# Left out on purpose (plan 2.1):
+#   mirrors      MultiHPLT v3 (= HPLT), NLLB v1 (~ CCMatrix), MultiMaCoCu v2 (= MaCoCu), every ELRA-W0xxx
+#                (= its ELRC-NNN twin), unnumbered ELRC sets (EUIPO_2017, EUR_LEX, EU_publications,
+#                wikipedia_health, EC_EUROPA, vaccination), ELRC_2682 (= ELRC-2711-EMEA, 781,987 pairs),
+#                ELRC_2922 (= ELRC-1020-collection_about_Cyp)
+#   broken       ELRC-EMEA (13.7M listed, 14.9M tokens), ELRC-presscorner_covid, ELRC-Press_Releases,
+#                ELRC-EUROPARL_covid, ELRC-antibiotic
+#   not text     XLEnt (entities), LinguaTools-WikiTitles (titles)
+#   UI strings   KDE4, GNOME, translatewiki, tldr-pages
+#   other        bible-uedin (archaic), CCAligned (noisy crawl), Ubuntu (empty), ELRC-416-Swedish_Social_Secur
+#                (listed twice, 30 pairs)
+
+corpora:
+  ## Tier A: human-translated or curated (light filter)
+  Europarl:                       {version: v8, tier: A, domain: parliament}             # 1,292,180
+  TED2020:                        {version: v1, tier: A, domain: talks}                  #   269,407
+  NeuLab-TedTalks:                {version: v1, tier: A, domain: talks}                  #   153,493
+  SETIMES:                        {version: v2, tier: A, domain: news}                   #   227,168
+  GlobalVoices:                   {version: v2018q4, tier: A, domain: news}              #   120,421
+  QED:                            {version: v2.0a, tier: A, domain: lectures}            #   550,438
+  Tatoeba:                        {version: v2026-07-08, tier: A, domain: general}       #    27,103
+  wikimedia:                      {version: v20260327, tier: A, domain: wikipedia}       #   911,307
+  EMEA:                           {version: v3, tier: A, domain: medical}                # 1,073,225
+  ELRC-2711-EMEA:                 {version: v1, tier: A, domain: medical}                #   781,988
+  DGT:                            {version: v2021, tier: A, domain: legal}               # 5,815,620
+  JRC-Acquis:                     {version: v3.0, tier: A, domain: legal}                #    17,717
+  EUconst:                        {version: v1, tier: A, domain: legal}                  #     9,990
+  ECB:                            {version: v1, tier: A, domain: finance}                #   102,986
+  ELITR-ECA:                      {version: v1, tier: A, domain: eu_audit}               #   381,561
+  ELRC-5067-SciPar:               {version: v1, tier: A, domain: science}                #   742,987
+  Books:                          {version: v1, tier: A, domain: literature}             #     1,285
+  SPC:                            {version: v1, tier: A, domain: mixed}                  #     8,181
+  TildeMODEL:                     {version: v2018, tier: A, domain: mixed}               #     5,238
+  ECDC:                           {version: v2016-03-16, tier: A, domain: medical}       #     2,531
+  # numbered ELRC sets: Greek and Cypriot government, EU institutions
+  ELRC-649-Greek_administration:  {version: v1, tier: A, domain: government}             #    12,510
+  ELRC-652-Greek_law:             {version: v1, tier: A, domain: legal}                  #     1,980
+  ELRC-419-Greek_legislation_An:  {version: v1, tier: A, domain: legal}                  #     1,070
+  ELRC-1986-Constitution_Greece:  {version: v1, tier: A, domain: legal}                  #     1,022
+  ELRC-936-Prime_Minister_Helle:  {version: v1, tier: A, domain: government}             #     5,323
+  ELRC-932-Hellenic_Foreign_Aff:  {version: v1, tier: A, domain: government}             #     3,471
+  ELRC-1984-Hellenic_Gaming_Comm: {version: v1, tier: A, domain: government}             #     3,875
+  ELRC-842-Quarterly_Reports_Pa:  {version: v1, tier: A, domain: government}             #    21,248
+  ELRC-843-collection_reports_G:  {version: v1, tier: A, domain: government}             #    16,286
+  ELRC-1981-EQF_Referencing_Repo: {version: v1, tier: A, domain: government}             #     2,100
+  ELRC-1787-Press_Releases_PIO:   {version: v1, tier: A, domain: government}             #     5,163
+  ELRC-5160-Press_Releases_PIO:   {version: v1, tier: A, domain: government}             #       955
+  ELRC-1067-PIO_Publication_Wind: {version: v1, tier: A, domain: government}             #     2,629
+  ELRC-1065-PIO_Publication_Cypr: {version: v1, tier: A, domain: government}             #     1,321
+  ELRC-1070-Press_Information_Cy: {version: v1, tier: A, domain: government}             #     1,863
+  ELRC-1020-collection_about_Cyp: {version: v1, tier: A, domain: government}             #     1,870
+  ELRC-1970-governmental_about_M: {version: v1, tier: A, domain: government}             #     1,435
+  ELRC_3382:                      {version: v1, tier: A, domain: government}             #     3,818
+  ELRC_2923:                      {version: v1, tier: A, domain: government}             #       420
+  ELRC-1175-EUIPO_2017:           {version: v1, tier: A, domain: legal}                  #    20,027
+  ELRC-3562-EUR_LEX_covid:        {version: v1, tier: A, domain: legal}                  #    23,024
+  ELRC-2872-EU_publications_medi: {version: v1, tier: A, domain: medical}                #    13,092
+  ELRC-3058-wikipedia_health:     {version: v1, tier: A, domain: medical}                #     1,871
+  ELRC-3461-EC_EUROPA_covid:      {version: v1, tier: A, domain: medical}                #     2,234
+  ELRC-2735-vaccination:          {version: v1, tier: A, domain: medical}                #       519
+  ELRC-3603-presscorner_covid:    {version: v1, tier: A, domain: medical}                #     6,635
+  ELRC-3290-EUROPARL_covid:       {version: v1, tier: A, domain: medical}                #       692
+  ELRC-3199-antibiotic:           {version: v1, tier: A, domain: medical}                #       990
+  # PDF extraction noise: filter harder
+  EUbookshop:                     {version: v2, tier: A, domain: eu_publications, min_bicleaner: 0.5}  # 4,022,952
+
+  ## Tier A-: curated crawl and mined Wikipedia (score-filter)
+  MaCoCu:                         {version: v2, tier: A-, domain: web}                   # 3,583,978
+  WikiMatrix:                     {version: v1, tier: A-, domain: wikipedia}             #   620,802
+  Wikipedia:                      {version: v1.0, tier: A-, domain: wikipedia, enabled: False}  # 104,076; not in the plan
+
+  ## Tier B: web-mined (score, keep top-K)
+  ParaCrawl:                      {version: v9, tier: B, domain: web}                    # 21,402,471
+  HPLT:                           {version: v3, tier: B, domain: web}                    # 55,649,558
+  CCMatrix:                       {version: v1, tier: B, domain: web}                    # 49,262,631
+
+  ## Tier B': film dialogue, only if conversational text is in scope
+  OpenSubtitles:                  {version: v2024, tier: "B'", domain: subtitles, min_bicleaner: 0.8, cap: 2000000}  # 76,818,359

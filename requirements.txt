@@ -1,0 +1,8 @@
+# Data pipeline, on top of the nemo2 env from hung-asr-aws (Python 3.10, numpy 1.26, pandas, pyarrow,
+# datasets, huggingface-hub, sentence-transformers, requests, tqdm, pyyaml, tabulate).
+xxhash
+fasttext-wheel          # language ID; needs numpy < 2
+
+# Bicleaner-AI pulls in TensorFlow; keep it in its own env and point filter_args.scoring.bicleaner_cmd at it:
+#   conda create -n bicleaner python=3.10 && conda run -n bicleaner pip install bicleaner-ai
+# bicleaner-ai

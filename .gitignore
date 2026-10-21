@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# IDE
+.idea/
+
+# Local data, caches and runs (data lives on the GPU server)
+tmp/
+data/
+wandb/
+runs/
+*.parquet
+*.zip
+.env
