@@ -7,7 +7,7 @@
     eval/{name}.jsonl                              FLORES, NTREX, held-out sets
     sets/{name}/part-NNNNN.parquet                 bridge, sft, preference_pool
     reports/                                       removal-rate tables
-    tts/{clean,needs_tn}/part-NNNNN.parquet        Greek sentences for TTS (preprocessing/tts.py)
+    tts/{corpus}/{clean,needs_tn}.csv              Greek sentences for TTS (preprocessing/tts.py)
 """
 import glob
 import os

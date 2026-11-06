@@ -44,7 +44,7 @@ Everything is under `{dataset_path}/{pair}/`: `downloads/`, `stages/{stage}/{cor
 - Sets keep both languages. `preprocessing/prepare.py::make_data_module` maps them to `source`/`target` for `train_args.direction` and normalizes eval sources (never references).
 
 ### Greek text for TTS (`preprocessing/tts.py`)
-A separate CPU pipeline run with `--config config/my_config_tts.yaml`. It reads `stages/raw` and writes `stages/tts_*` and `tts/{clean,needs_tn}`. Don't use `pipeline.py --corpora` for this: `dedup` would overwrite the NMT stage with a subset of the corpora.
+A separate CPU pipeline run with `--config config/my_config_tts.yaml`. It reads `stages/raw` and writes `stages/tts_*` and `tts/{corpus}/{clean,needs_tn}.csv`. Don't use `pipeline.py --corpora` for this: `dedup` would overwrite the NMT stage with a subset of the corpora.
 
 ## Gotchas
 - Don't name a module after a stdlib one (`io.py`, `parser`-like names in new packages). Scripts run as `python preprocessing/x.py` put `preprocessing/` first on `sys.path`.

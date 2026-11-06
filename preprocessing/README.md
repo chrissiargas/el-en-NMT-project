@@ -121,14 +121,14 @@ python preprocessing/report.py inspect --config config/my_config_tts.yaml --stag
 | --- | --- | --- |
 | `clean` | Runs `normalize()` on the Greek side and drops the English. Unifies punctuation (`?` becomes `;`). Strips references and credits in `[...]`, stage directions such as `(Γέλια)`, leading dashes and speaker labels. Then applies the rules on the right, in order. | `empty`, `latin`, `polytonic`, `parentheses`, `other_chars`, `length`, `fragment`, `unbalanced_quotes`, `all_caps`, `boilerplate`, `semicolon`, `repeated_word`, `stress` |
 | `dedup` | Keeps one copy of each sentence, ignoring case and punctuation. | `duplicate` |
-| `export` | Writes `tts/clean` (ready to read aloud) and `tts/needs_tn`, plus `tts/_composition.json`. | none |
+| `export` | Writes one folder per corpus, `tts/{corpus}/`, with `clean.csv` (ready to read aloud) and `needs_tn.csv`, plus `tts/_composition.json`. | none |
 | `report` | Writes the removal-rate tables to `tts/reports/`. | none |
 
-- **`tts/needs_tn`** holds sentences with digits, symbols, abbreviations or acronyms. They need text normalization first, which is ambiguous in Greek ("3" is "τρεις" or "τρία" depending on the noun). The `needs_tn` column says why.
+- **`needs_tn.csv`** holds sentences with digits, symbols, abbreviations or acronyms. They need text normalization first, which is ambiguous in Greek ("3" is "τρεις" or "τρία" depending on the noun). The `needs_tn` column says why.
 - **`stress`** requires one accent on every word of two or more syllables, and allows a second one only before an enclitic. Consecutive vowels count as one syllable, so it misses some errors but does not reject "για" or "ποιος".
 - **Limit:** the rules see characters, not grammar. Fluent-looking but wrong sentences (for example machine-translated subtitles in QED) get through.
 
-Output columns are `el`, `corpus`, `doc_id` and `line_id`, so every sentence traces back to its OPUS archive.
+The CSV columns are `line_id` and `el` (plus `needs_tn` in `needs_tn.csv`). The folder and `line_id` trace every sentence back to its OPUS archive.
 
 ## Requirements and pitfalls
 

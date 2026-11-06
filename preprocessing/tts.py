@@ -5,7 +5,7 @@
     python preprocessing/report.py inspect --config config/my_config_tts.yaml --stage tts_clean --corpus QED --reason stress
 
 Steps: `clean` (normalize, strip text nobody would read aloud, filter), `dedup` (one copy per sentence, ignoring
-case and punctuation), `export` (tts/clean and tts/needs_tn), `report`.
+case and punctuation), `export` (tts/{corpus}/clean.csv and needs_tn.csv), `report`.
 
 Sentences with digits, symbols, abbreviations or acronyms need text normalization before they can be spoken, and
 Greek makes that ambiguous ("3" is "τρεις" or "τρία" depending on the noun), so they go to their own bucket. Their
@@ -18,6 +18,7 @@ sys.path.insert(0, dirname(dirname(os.path.abspath(__file__))))
 
 import argparse
 import re
+from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
 from typing import List, Optional, Tuple
 
@@ -30,7 +31,7 @@ from preprocessing import paths, report
 from preprocessing.decontaminate import match_key
 from preprocessing.dedup import first_occurrences
 from preprocessing.normalize import LATIN_LETTER, Normalizer
-from preprocessing.shards import MaskFn, read_shard, read_stage, run_stage, write_json, write_shards
+from preprocessing.shards import MaskFn, read_shard, read_stage, run_stage, write_json
 
 CAPITALS = 'Α-ΩΆΈΉΊΌΎΏΪΫ'
 LOWER = 'α-ωάέήίόύώϊϋΐΰ'
@@ -227,16 +228,22 @@ def dedup(conf, corpora: List[str], overwrite: bool = False):
 
 
 def export(conf, corpora: List[str], overwrite: bool = False):
-    df = pd.concat([read_stage(conf, 'tts_dedup', c) for c in corpora], ignore_index=True)
-    is_clean = df['needs_tn'] == ''
-    write_shards(df[is_clean].drop(columns='needs_tn'), paths.tts_dir(conf, 'clean'), conf.shard_size)
-    write_shards(df[~is_clean], paths.tts_dir(conf, 'needs_tn'), conf.shard_size)
+    composition, reasons = {'clean': {}, 'needs_tn': {}}, Counter()
+    for corpus in corpora:
+        df = read_stage(conf, 'tts_dedup', corpus)
+        is_clean = df['needs_tn'] == ''
+        folder = paths.tts_dir(conf, corpus)
+        os.makedirs(folder, exist_ok=True)
+        df[is_clean][['line_id', 'el']].to_csv(os.path.join(folder, 'clean.csv'), index=False)
+        df[~is_clean][['line_id', 'el', 'needs_tn']].to_csv(os.path.join(folder, 'needs_tn.csv'), index=False)
 
-    composition = {'clean': df[is_clean]['corpus'].value_counts().to_dict(),
-                   'needs_tn': df[~is_clean]['corpus'].value_counts().to_dict(),
-                   'needs_tn_reasons': df[~is_clean]['needs_tn'].str.split(',').explode().value_counts().to_dict()}
+        composition['clean'][corpus] = int(is_clean.sum())
+        composition['needs_tn'][corpus] = int((~is_clean).sum())
+        reasons.update(df[~is_clean]['needs_tn'].str.split(',').explode().tolist())
+        print(f'[export] {corpus}: clean {is_clean.sum():,}, needs_tn {(~is_clean).sum():,}')
+
+    composition['needs_tn_reasons'] = dict(reasons.most_common())
     write_json(composition, os.path.join(paths.tts_dir(conf), '_composition.json'))
-    print(f'[export] clean: {is_clean.sum():,}, needs_tn: {(~is_clean).sum():,}\n{composition}')
 
 
 STEPS = {
