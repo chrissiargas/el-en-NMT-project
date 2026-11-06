@@ -1,0 +1,95 @@
+data_args:
+  tmpdir: "tmp"
+  hf_cache: "/data-sinno/c.siargkas/datasets/el-en-nmt/huggingface"
+  dataset_path: "/data-sinno/c.siargkas/datasets/el-en-nmt"
+  pair: 'el-en'                    # OPUS pair code; all data lives under {dataset_path}/{pair}
+  num_workers: 10                  # CPU processes for the per-shard steps
+  gpus: [0, 1, 2, 3]               # one scoring worker per device
+  shard_size: 500000               # rows per parquet shard
+  seed: 42
+
+main_args:
+  tiers: ['A', 'A-', 'B']          # add "B'" (OpenSubtitles) only if conversational text is in scope
+  eval_sets: ['flores_dev', 'flores_devtest', 'ntrex']
+  results_path: "/data-sinno/c.siargkas/datasets/el-en-nmt/results"
+  checkpoint_path: "/data-sinno/c.siargkas/datasets/el-en-nmt/checkpoints"
+
+filter_args:
+  samples: 100                     # kept/removed pairs saved per step, corpus and reason, for reading by eye
+  ## Step 1: in-domain held-out test sets
+  holdout:
+    corpora: ['Europarl', 'EMEA', 'TED2020', 'SETIMES']
+    size: 2000
+    block_size: 100                # contiguous lines per held-out unit; a unit never crosses an OPUS document
+  ## Step 2: normalization (NFC, HTML, control and zero-width characters, whitespace are always on)
+  normalize:
+    fix_spacing_tonos: True        # "΄Αρθρο" -> "Άρθρο"
+    fix_homoglyphs: True           # Latin letters inside Greek words and vice versa
+    fix_final_sigma: True
+  ## Step 1b: remove eval sentences from training (needs normalized text, so it runs after step 2)
+  decontaminate:
+    ngram: 13
+    min_words: 4                   # eval sentences shorter than this are not exact-matched
+  ## Step 3
+  dedup:
+    max_translations: 3            # per identical el sentence and per identical en sentence
+  ## Step 4
+  rules:
+    min_words: 1
+    max_words: 150
+    min_char_ratio: 0.5            # len(el) / len(en)
+    max_char_ratio: 2.0
+    min_greek: 0.7                 # share of letters that are Greek on the el side
+    min_latin: 0.9                 # share of letters that are Latin on the en side
+    max_non_alpha: 0.3
+    max_repeat: 5                  # same token this many times in a row
+    match_numbers: True
+    match_urls: True
+  ## Step 5
+  langid:
+    model: 'glotlid'               # glotlid | openlid | lid176
+    min_confidence: 0.8
+    min_words: 4                   # shorter sides are left to the script-ratio rule
+    num_workers: 8                 # each worker holds its own copy of the model
+  ## Step 6
+  scoring:
+    tiers: ['A-', 'B', "B'"]       # also scored: corpora with min_bicleaner, and set_args.sft.corpora
+    bicleaner_model: 'bitextor/bicleaner-ai-full-en-el'
+    bicleaner_cmd: 'bicleaner-ai-classify'   # e.g. 'conda run -n bicleaner bicleaner-ai-classify'
+    bicleaner_args: ['--scol', '1', '--tcol', '2', '--disable_hardrules']
+    labse_model: 'sentence-transformers/LaBSE'
+    labse_batch_size: 512
+  ## Step 7: Tier A keeps everything (unless the corpus sets min_bicleaner); other tiers are cut to the budget
+  budget:
+    min_bicleaner: 0.7
+    total: 20000000                # rows kept across all non-A corpora
+    temperature: 1.2               # spreads the budget so no single crawl dominates
+
+set_args:
+  temperature: 1.2
+  bridge:
+    size: 4000000
+    tier_a_share: 0.5
+    clean_bicleaner: 0.85          # rows marked is_clean for the last ~20% of stage 1
+  sft:
+    size: 150000
+    corpora: ['TED2020', 'NeuLab-TedTalks', 'Europarl', 'GlobalVoices', 'SETIMES', 'QED', 'Tatoeba', 'wikimedia']
+    web_top_fraction: 0.005        # top share of each A-/B corpus by Bicleaner
+    min_bicleaner: 0.8             # Bicleaner and LaBSE must both agree
+    min_labse: 0.8
+    min_words: 5
+    max_words: 80
+  preference_size: 20000           # SFT-quality pairs reserved for CPO, disjoint from the SFT set
+
+train_args:
+  direction: 'el-en'               # el-en (Greek -> English) or en-el
+  train_set: 'bridge'              # bridge | sft
+  eval_set: 'flores_dev'
+  micro_data: False
+  micro_size: 1000
+  randomize: True
+
+tts_args:
+  corpora: ['TED2020', 'SETIMES', 'QED', 'wikimedia', 'WikiMatrix']
+  min_words: 5                     # about 2-10 seconds of speech
+  max_words: 25

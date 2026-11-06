@@ -100,6 +100,13 @@ class Parser:
             help='training data arguments'
         )
 
+        self.parser.add_argument(
+            '--tts_args',
+            default=dict(),
+            type=dict,
+            help='Greek text for TTS'
+        )
+
     def __getstate__(self):
         # argparse parsers do not pickle; worker processes only need the loaded values.
         state = self.__dict__.copy()
@@ -176,6 +183,9 @@ class Parser:
             'direction', 'train_set', 'eval_set', 'micro_data', 'micro_size', 'randomize'
         ], 'train_args')
         assert self.train_args.direction in ('el-en', 'en-el'), self.train_args.direction
+
+        ## Greek Text for TTS
+        self.tts_args = section(args.tts_args, ['corpora', 'min_words', 'max_words'], 'tts_args')
 
         ## Corpus Registry
         with open(args.registry, 'r') as rf:

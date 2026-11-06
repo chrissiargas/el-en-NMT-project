@@ -107,6 +107,15 @@ Besides the tiers in `scoring.tiers`, the scoring step also scores any corpus wi
 | `micro_data`, `micro_size` | Train on a small subset, for debugging |
 | `randomize` | Shuffle the training set |
 
+### `tts_args`: Greek text for TTS
+
+| Key | Meaning |
+| --- | --- |
+| `corpora` | OPUS corpora to take Greek sentences from |
+| `min_words`, `max_words` | Length window, counting words and numbers |
+
+`my_config_tts.yaml` is the same config with its own data folder; pass it with `--config`. See "Greek text for TTS" in `preprocessing/README.md`.
+
 ## `corpora.yaml`: corpus registry
 
 One entry per OPUS corpus, keyed by its exact OPUS name:

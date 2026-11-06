@@ -88,3 +88,8 @@ train_args:
   micro_data: False
   micro_size: 1000
   randomize: True
+
+tts_args:
+  corpora: ['TED2020', 'SETIMES', 'QED', 'wikimedia', 'WikiMatrix']
+  min_words: 5                     # about 2-10 seconds of speech
+  max_words: 25

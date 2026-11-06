@@ -107,6 +107,29 @@ A step is a picklable callable `fn(df) -> (df, reasons)`:
 
 Pass it to `shards.run_stage(conf, stage, src_stage, corpora, make_fn)`, which runs it over every shard in parallel and writes the stats and samples. Add the stage name to `paths.STAGES` and the step to `pipeline.STEPS`.
 
+## Greek text for TTS
+
+`tts.py` is a separate, CPU-only pipeline that takes Greek sentences from `tts_args.corpora` for a text-to-speech task. It does not touch the NMT stages; it reads `stages/raw` and writes `stages/tts_clean`, `stages/tts_dedup` and `tts/`. `config/my_config_tts.yaml` points it at its own data folder.
+
+```bash
+python constructors/opus.py --config config/my_config_tts.yaml --corpora TED2020 SETIMES QED wikimedia WikiMatrix
+python preprocessing/tts.py --config config/my_config_tts.yaml --steps all
+python preprocessing/report.py inspect --config config/my_config_tts.yaml --stage tts_clean --corpus QED --reason stress
+```
+
+| Step | What it does | Removal reasons |
+| --- | --- | --- |
+| `clean` | Runs `normalize()` on the Greek side and drops the English. Unifies punctuation (`?` becomes `;`). Strips references and credits in `[...]`, stage directions such as `(Γέλια)`, leading dashes and speaker labels. Then applies the rules on the right, in order. | `empty`, `latin`, `polytonic`, `parentheses`, `other_chars`, `length`, `fragment`, `unbalanced_quotes`, `all_caps`, `boilerplate`, `semicolon`, `repeated_word`, `stress` |
+| `dedup` | Keeps one copy of each sentence, ignoring case and punctuation. | `duplicate` |
+| `export` | Writes `tts/clean` (ready to read aloud) and `tts/needs_tn`, plus `tts/_composition.json`. | none |
+| `report` | Writes the removal-rate tables to `tts/reports/`. | none |
+
+- **`tts/needs_tn`** holds sentences with digits, symbols, abbreviations or acronyms. They need text normalization first, which is ambiguous in Greek ("3" is "τρεις" or "τρία" depending on the noun). The `needs_tn` column says why.
+- **`stress`** requires one accent on every word of two or more syllables, and allows a second one only before an enclitic. Consecutive vowels count as one syllable, so it misses some errors but does not reject "για" or "ποιος".
+- **Limit:** the rules see characters, not grammar. Fluent-looking but wrong sentences (for example machine-translated subtitles in QED) get through.
+
+Output columns are `el`, `corpus`, `doc_id` and `line_id`, so every sentence traces back to its OPUS archive.
+
 ## Requirements and pitfalls
 
 - **Hugging Face imports.** Call `set_environment` before importing Hugging Face libraries. The modules here import them inside functions for that reason.

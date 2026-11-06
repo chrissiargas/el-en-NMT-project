@@ -9,7 +9,7 @@ from os.path import dirname
 sys.path.insert(0, dirname(dirname(os.path.abspath(__file__))))
 
 import argparse
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 
@@ -18,11 +18,12 @@ from preprocessing import paths
 from preprocessing.shards import KEPT_SAMPLES, REMOVED_SAMPLES, read_shard, read_stats
 
 
-def table(conf, corpora: List[str]):
+def table(conf, corpora: List[str], stages: Optional[List[str]] = None, out: Optional[str] = None):
+    all_stages = stages or paths.STAGES
     counts, reasons = [], []
     for corpus in corpora:
         row = {'corpus': corpus, 'tier': conf.registry[corpus].tier}
-        for stage in paths.STAGES:
+        for stage in all_stages:
             stats = read_stats(paths.stage_dir(conf, stage, corpus))
             row[stage] = stats['out'] if stats else None
             if stats and stage == 'raw':
@@ -33,7 +34,7 @@ def table(conf, corpora: List[str]):
         counts.append(row)
 
     counts = pd.DataFrame(counts).drop(columns=['raw_in'], errors='ignore')
-    stages = [s for s in paths.STAGES if counts[s].notna().any()]
+    stages = [s for s in all_stages if counts[s].notna().any()]
     totals = counts.groupby('tier', sort=False)[stages].sum(min_count=1).reset_index()
     totals['corpus'] = 'TOTAL ' + totals['tier']
     totals = totals.sort_values('tier', key=lambda t: t.map(TIERS.index))
@@ -44,7 +45,7 @@ def table(conf, corpora: List[str]):
         removal[f'{stage} %'] = (100 * (1 - counts[stage] / counts[prev])).round(1)
     removal['kept %'] = (100 * counts[stages[-1]] / counts[stages[0]]).round(1)
 
-    out = paths.report_dir(conf)
+    out = out or paths.report_dir(conf)
     os.makedirs(out, exist_ok=True)
     counts.to_csv(os.path.join(out, 'counts.csv'), index=False)
     removal.to_csv(os.path.join(out, 'removal_rates.csv'), index=False)
@@ -65,7 +66,9 @@ def inspect(conf, stage: str, corpus: str, kind: str = 'removed', reason: str = 
         df = df[df['reason'] == reason]
     for row in df.head(n).itertuples():
         tag = f' [{row.reason}]' if kind == 'removed' else ''
-        print(f'--- {corpus} line {row.line_id}{tag}\nEL: {row.el}\nEN: {row.en}')
+        print(f'--- {corpus} line {row.line_id}{tag}\nEL: {row.el}')
+        if hasattr(row, 'en'):  # the TTS stages keep Greek only
+            print(f'EN: {row.en}')
     if kind == 'removed' and 'reason' in df:
         print(f'\nReasons in sample: {df["reason"].value_counts().to_dict()}')
 
@@ -76,7 +79,7 @@ if __name__ == '__main__':
     parser.add_argument('--exp', type=int, default=0)
     parser.add_argument('--config', type=str, default=None)
     parser.add_argument('--corpora', nargs='+', default=None)
-    parser.add_argument('--stage', choices=paths.STAGES, default='rules')
+    parser.add_argument('--stage', choices=paths.STAGES + paths.TTS_STAGES, default='rules')
     parser.add_argument('--corpus', type=str, default=None)
     parser.add_argument('--kind', choices=['kept', 'removed'], default='removed')
     parser.add_argument('--reason', type=str, default=None)

@@ -7,12 +7,14 @@
     eval/{name}.jsonl                              FLORES, NTREX, held-out sets
     sets/{name}/part-NNNNN.parquet                 bridge, sft, preference_pool
     reports/                                       removal-rate tables
+    tts/{clean,needs_tn}/part-NNNNN.parquet        Greek sentences for TTS (preprocessing/tts.py)
 """
 import glob
 import os
 from typing import List
 
 STAGES = ['raw', 'normalize', 'decontaminate', 'dedup', 'rules', 'langid', 'score', 'budget']
+TTS_STAGES = ['tts_clean', 'tts_dedup']
 
 
 def root(conf) -> str:
@@ -24,7 +26,7 @@ def download_dir(conf, corpus: str) -> str:
 
 
 def stage_dir(conf, stage: str, corpus: str) -> str:
-    assert stage in STAGES, f'Unknown stage {stage}'
+    assert stage in STAGES + TTS_STAGES, f'Unknown stage {stage}'
     return os.path.join(root(conf), 'stages', stage, corpus)
 
 
@@ -50,3 +52,7 @@ def set_dir(conf, name: str) -> str:
 
 def report_dir(conf) -> str:
     return os.path.join(root(conf), 'reports')
+
+
+def tts_dir(conf, name: str = '') -> str:
+    return os.path.join(root(conf), 'tts', name)
